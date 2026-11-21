@@ -326,7 +326,7 @@ es:{title:'🔒 Privacidad y transparencia',intro:'Cómo funciona la privacidad 
 tr:{title:'🔒 Gizlilik ve şeffaflık',intro:'My AI Model gizliliği nasıl ele alır (sürüm 5.1).',localTitle:'Cihazınızda neler kalır?',local:'Görsel komutları tarayıcınızda oluşturulur. Sahne seçimleri, ek istekler, çekim ayarları, dil ve görünüm, silinene kadar tarayıcının yerel depolamasında saklanır.',photosTitle:'Fotoğraflar ve harici yapay zekâ',photos:'My AI Model referans fotoğrafı yüklemez ve görsel üretmez. ChatGPT veya Gemini’ye gönderdiğiniz içerikler ilgili hizmetin gizlilik kurallarına tabidir.',hostingTitle:'Barındırma ve teknik veriler',hosting:'Site GitHub Pages üzerinde barındırılır. GitHub ve altyapısı IP adresi ve erişim zamanı gibi bağlantı verilerini işleyebilir. İncelenen uygulama kodunda yerleşik reklam veya analiz entegrasyonu bulunmadı.',controlTitle:'Kontrol sizde',control:'Uygulamanın bu cihazdaki yerel ayarlarını silebilirsiniz. Bu işlem harici hizmetlere gönderilmiş verileri silmez.',delete:'🗑️ Yerel uygulama verilerini sil',done:'Yerel ayarlar silindi. Varsayılanlar için sayfayı yenileyin.',note:'Bu teknik özet eksiksiz bir yasal gizlilik bildirimi değildir. Genel kullanımdan önce sorumlu kişi, iletişim bilgileri ve barındırma ayrıntıları eklenmeli ve hukuken kontrol edilmelidir.',external:'Harici hizmetlerin gizlilik bildirimleri:'},
 ar:{title:'🔒 الخصوصية والشفافية',intro:'كيفية التعامل مع الخصوصية في My AI Model (الإصدار 5.1).',localTitle:'ما الذي يبقى على جهازك؟',local:'تُنشأ أوصاف الصور داخل المتصفح. تُحفظ خيارات المشهد والطلبات والإعدادات واللغة والمظهر في التخزين المحلي للمتصفح حتى تحذفها.',photosTitle:'الصور وخدمات الذكاء الاصطناعي',photos:'لا يرفع My AI Model الصور المرجعية ولا ينشئ الصور بنفسه. عند إرسال المحتوى إلى ChatGPT أو Gemini تسري سياسة خصوصية الخدمة المعنية.',hostingTitle:'الاستضافة والبيانات التقنية',hosting:'يُستضاف الموقع على GitHub Pages. قد تعالج GitHub وبنيتها بيانات الاتصال مثل عنوان IP ووقت الوصول. لم يُعثر على أدوات تحليل أو إعلانات مدمجة في الشيفرة التي تمت مراجعتها.',controlTitle:'التحكم ببياناتك',control:'يمكنك حذف إعدادات التطبيق المحلية على هذا الجهاز. لا يؤدي ذلك إلى حذف البيانات المرسلة سابقًا إلى الخدمات الخارجية.',delete:'🗑️ حذف بيانات التطبيق المحلية',done:'حُذفت الإعدادات المحلية. أعد تحميل الصفحة.',note:'هذا ملخص تقني وليس إشعار خصوصية قانونيًا كاملًا. قبل النشر العام يجب تحديد المسؤول ومعلومات التواصل ومراجعة تفاصيل الاستضافة قانونيًا.',external:'سياسات خصوصية الخدمات الخارجية:'}
 };
-const keys=['my-ai-model-v32','my-ai-model-appearance','my-ai-model-shoot-mode','my-ai-model-shoot-settings','my-ai-model-favorites-v53'];
+const keys=['my-ai-model-v32','my-ai-model-appearance','my-ai-model-shoot-mode','my-ai-model-shoot-settings','my-ai-model-creative-v57','my-ai-model-favorites-v53'];
 // Reset all application preferences only after the user confirms in the original reset dialog.
 document.addEventListener('my-ai-model-reset-all',function(){keys.filter(function(key){return key!=='my-ai-model-favorites-v53'}).forEach(function(key){try{localStorage.removeItem(key)}catch(e){}});window.location.reload()});
 function render(){const language=document.getElementById('v5Language')?.value||'de',t=translations[language]||translations.de;document.querySelectorAll('.privacy-panel').forEach(panel=>{panel.querySelector('summary').textContent=t.title;const body=panel.querySelector('[data-privacy-content]');body.dir=language==='ar'?'rtl':'ltr';body.replaceChildren();const add=(tag,value,cls)=>{const node=document.createElement(tag);node.textContent=value;if(cls)node.className=cls;body.append(node);return node};add('p',t.intro);[['localTitle','local'],['photosTitle','photos'],['hostingTitle','hosting'],['controlTitle','control']].forEach(pair=>{add('h3',t[pair[0]]);add('p',t[pair[1]])});add('h3',t.external);const links=add('p','');[['GitHub','https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'],['ChatGPT','https://openai.com/policies/privacy-policy/'],['Gemini','https://policies.google.com/privacy']].forEach(([name,url],i)=>{if(i)links.append(document.createTextNode(' · '));const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=name;links.append(a)});const button=add('button',t.delete,'privacy-delete');button.type='button';const status=add('p','','privacy-note');status.setAttribute('role','status');button.addEventListener('click',()=>{keys.forEach(key=>{try{localStorage.removeItem(key)}catch(e){}});document.querySelectorAll('.privacy-panel [role="status"]').forEach(n=>n.textContent=t.done)});add('p',t.note,'privacy-note')})}
@@ -542,10 +542,21 @@ $('creativeApply').addEventListener('click',apply);
  ['change','input'].forEach(event=>node.addEventListener(event,()=>{if(selection())apply()}));
 });
 $('generate').addEventListener('click',()=>{if(selection())apply()});
-$('reset').addEventListener('click',()=>{setTimeout(()=>{if(!selection())return;apply()},0)});
+// Clear the separate creative studio state only after reset confirmation.
+document.addEventListener('my-ai-model-reset-all',()=>{
+ $('creativeMode').value='';
+ populate();
+ $('creativeSub').value='';
+ $('creativeDetail').value='';
+ $('creativeKeep').checked=true;
+ $('creativePreview').textContent='Kein Kreativmodus ausgewählt.';
+ $('creativeStatus').textContent='Der Kreativstil ergänzt deine bestehende Bildanweisung.';
+ try{localStorage.removeItem('my-ai-model-creative-v57')}catch(e){}
+ apply();
+});
 try{
  const d=JSON.parse(localStorage.getItem('my-ai-model-creative-v57')||'{}');
- if(d.mode&&presets[d.mode])$('creativeMode').value=d.mode;
+ $('creativeMode').value=(d.mode&&presets[d.mode])?d.mode:'';
  populate();
  if(d.sub&&[...$('creativeSub').options].some(o=>o.value===d.sub))$('creativeSub').value=d.sub;
  if(typeof d.detail==='string')$('creativeDetail').value=d.detail;
